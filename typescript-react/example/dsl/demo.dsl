@@ -1,5 +1,10 @@
 module demo {
 
+  role USER_VIEW;
+  role USER_CREATE;
+  role USER_MANAGE;
+  role USER_CHANGE_STATUS;
+
   role PACKAGE_VIEW;
   role PACKAGE_CREATE;
   role PACKAGE_MANAGE;
@@ -13,6 +18,75 @@ module demo {
     String country;
   }
 
+  enum Gender {
+    Male;
+    Female;
+    Other;
+  }
+
+  enum UserStatus {
+    Active;
+    Blocked;
+    Deactivated;
+  }
+
+  mixin UserMixin {
+    UUID       ID;
+    String     firstName;
+    String     lastName;
+    String     email;
+    Gender     gender;
+    Address    address;
+    UserStatus status;
+    Timestamp? statusChangedOn;
+  }
+
+  struct UserVM {
+    has mixin UserMixin;
+  }
+
+  struct SearchUsersFilter {
+    String? firstName;
+    String? lastName;
+    String? email;
+    UserStatus? status;
+  }
+
+  command LookupUser {
+    UUID   id;
+    UserVM user { server managed; }
+  }
+
+  command SearchUsers {
+    SearchUsersFilter filter;
+    List<UserVM>      users { server managed; }
+  }
+
+  command CreateUser {
+    has mixin UserMixin;
+    UUID          ID { server managed; }
+    Timestamp?    statusChangedOn { server managed; }
+    PackageStatus status { server managed; }
+  }
+
+  command EditUser {
+    has mixin UserMixin;
+    Timestamp?    statusChangedOn { server managed; }
+    UserStatus    status { server managed; }
+  }
+
+  command MarkUserAsActive {
+    UUID userID;
+  }
+
+  command MarkUserAsBlocked {
+    UUID userID;
+  }
+
+  command MarkUserAsDeactivated {
+    UUID userID;
+  }
+
   enum PackageStatus {
     Pending { description 'Pending'; }
     InDeliver { description 'In Delivery'; }
@@ -24,6 +98,7 @@ module demo {
     UUID          ID;
     Money         price;
     Decimal       weight;
+    String?       owner;
     Text?         description;
     Address       deliverToAddress;
     Address?      returnAddress;
@@ -79,6 +154,13 @@ module demo {
   }
 
   permissions {
+    allow LookupUser for USER_VIEW;
+    allow SearchUsers for USER_VIEW;
+    allow CreateUser for USER_CREATE;
+    allow EditUser for USER_MANAGE;
+    allow MarkUserAsActive for USER_CHANGE_STATUS;
+    allow MarkUserAsBlocked for USER_CHANGE_STATUS;
+    allow MarkUserAsDeactivated for USER_CHANGE_STATUS;
     allow LookupPackage for PACKAGE_VIEW;
     allow SearchPackages for PACKAGE_VIEW;
     allow CreatePackage for PACKAGE_CREATE;
@@ -97,7 +179,72 @@ module demo {
     country 'Country';
   }
 
+  group view UserBasicInformation 'Basic Information' for UserMixin {
+    firstName 'First Name';
+    lastName 'Last Name';
+    gender 'Gender';
+    email 'E-mail';
+  }
+
+  presenter CreateUser 'Enter User' {
+    item view {
+      use group view UserBasicInformation;
+      group 'Address' {
+        use address on item view Address;
+      }
+    }
+
+    actions {
+      save changes;
+    }
+  }
+
+  presenter EditUser 'Manage User' {
+    item view {
+      use group view UserBasicInformation;
+      group 'Address' {
+        use address on item view Address;
+      }
+    }
+
+    actions {
+      change data;
+      view switching;
+    }
+  }
+
+  presenter SearchUsers 'Search Users' {
+    filter from filter {
+      firstName 'First Name';
+      lastName 'Last Name';
+      email 'E-mail';
+      status 'User Status';
+    }
+
+    templater 'Export' 'Search Users';
+
+    grid from users {
+      ID 'ID';
+      firstName 'First Name';
+      lastName 'Last Name';
+      email 'E-mail';
+      status 'User Status';
+
+      fast search;
+
+      edit action EditUser;
+      view action EditUser;
+    }
+
+    create action CreateUser;
+
+    actions {
+      navigation;
+    }
+  }
+
   group view PackageBasicInformation 'Basic Information' for PackageMixin {
+    owner 'Package Owner';
     price 'Delivery price' {
       validation Typescript 'isPositive';
     }

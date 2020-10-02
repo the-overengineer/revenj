@@ -4,6 +4,24 @@ import { json } from 'body-parser';
 import express from 'express';
 import * as path from 'path';
 
+import { ICreateUser } from './dsl/interface/demo.CreateUser';
+import { CreateUser } from './dsl/class/demo.CreateUser';
+import { IEditUser } from './dsl/interface/demo.EditUser';
+import { EditUser } from './dsl/class/demo.EditUser';
+import { ILookupUser } from './dsl/interface/demo.LookupUser';
+import { LookupUser } from './dsl/class/demo.LookupUser';
+import { IMarkUserAsActive } from './dsl/interface/demo.MarkUserAsActive';
+import { MarkUserAsActive } from './dsl/class/demo.MarkUserAsActive';
+import { IMarkUserAsBlocked } from './dsl/interface/demo.MarkUserAsBlocked';
+import { MarkUserAsBlocked } from './dsl/class/demo.MarkUserAsBlocked';
+import { IMarkUserAsDeactivated } from './dsl/interface/demo.MarkUserAsDeactivated';
+import { MarkUserAsDeactivated } from './dsl/class/demo.MarkUserAsDeactivated';
+import { ISearchUsers } from './dsl/interface/demo.SearchUsers';
+import { SearchUsers } from './dsl/class/demo.SearchUsers';
+import {
+  searchUsers, createUser, editUser, lookupUser, markUserAsActive, markUserAsBlocked, markUserAsDeactivated
+} from './model/domain';
+
 import { ICreatePackage } from './dsl/interface/demo.CreatePackage';
 import { CreatePackage } from './dsl/class/demo.CreatePackage';
 import { IEditPackage } from './dsl/interface/demo.EditPackage';
@@ -18,7 +36,9 @@ import { IMarkPackageReturned } from './dsl/interface/demo.MarkPackageReturned';
 import { MarkPackageReturned } from './dsl/class/demo.MarkPackageReturned';
 import { ISearchPackages } from './dsl/interface/demo.SearchPackages';
 import { SearchPackages } from './dsl/class/demo.SearchPackages';
-import { search, create, edit, lookup, markDelivered, markInDelivery, markReturned } from './model/domain';
+import {
+  searchPackages, createPackage, editPackage, lookupPackage, markPackageDelivered, markPackageInDelivery, markPackageReturned
+} from './model/domain';
 
 
 const app = express();
@@ -47,13 +67,21 @@ export const registerSubmitHandler = <T>(app: express.Application, name: string,
   });
 }
 
-registerSubmitHandler<ISearchPackages>(app, SearchPackages.domainObjectName, search);
-registerSubmitHandler<ICreatePackage>(app, CreatePackage.domainObjectName, create);
-registerSubmitHandler<IEditPackage>(app, EditPackage.domainObjectName, edit);
-registerSubmitHandler<ILookupPackage>(app, LookupPackage.domainObjectName, lookup);
-registerSubmitHandler<IMarkPackageInDelivery>(app, MarkPackageInDelivery.domainObjectName, markInDelivery);
-registerSubmitHandler<IMarkPackageDelivered>(app, MarkPackageDelivered.domainObjectName, markDelivered);
-registerSubmitHandler<IMarkPackageReturned>(app, MarkPackageReturned.domainObjectName, markReturned);
+registerSubmitHandler<ISearchUsers>(app, SearchUsers.domainObjectName, searchUsers);
+registerSubmitHandler<ICreateUser>(app, CreateUser.domainObjectName, createUser);
+registerSubmitHandler<IEditUser>(app, EditUser.domainObjectName, editUser);
+registerSubmitHandler<ILookupUser>(app, LookupUser.domainObjectName, lookupUser);
+registerSubmitHandler<IMarkUserAsActive>(app, MarkUserAsActive.domainObjectName, markUserAsActive);
+registerSubmitHandler<IMarkUserAsBlocked>(app, MarkUserAsBlocked.domainObjectName, markUserAsBlocked);
+registerSubmitHandler<IMarkUserAsDeactivated>(app, MarkUserAsDeactivated.domainObjectName, markUserAsDeactivated);
+
+registerSubmitHandler<ISearchPackages>(app, SearchPackages.domainObjectName, searchPackages);
+registerSubmitHandler<ICreatePackage>(app, CreatePackage.domainObjectName, createPackage);
+registerSubmitHandler<IEditPackage>(app, EditPackage.domainObjectName, editPackage);
+registerSubmitHandler<ILookupPackage>(app, LookupPackage.domainObjectName, lookupPackage);
+registerSubmitHandler<IMarkPackageInDelivery>(app, MarkPackageInDelivery.domainObjectName, markPackageInDelivery);
+registerSubmitHandler<IMarkPackageDelivered>(app, MarkPackageDelivered.domainObjectName, markPackageDelivered);
+registerSubmitHandler<IMarkPackageReturned>(app, MarkPackageReturned.domainObjectName, markPackageReturned);
 
 app.listen(PORT, () => {
   console.log(`Running on port ${PORT}`);
