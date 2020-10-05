@@ -30,6 +30,10 @@ export const ForFakeUser: React.FC<IForFakeUser> = ({ children }) => {
       setUser({
         username: 'demo_user',
         roles: new Set<Role>([
+          Role.USER_CHANGE_STATUS,
+          Role.USER_CREATE,
+          Role.USER_MANAGE,
+          Role.USER_VIEW,
           Role.PACKAGE_CHANGE_STATUS,
           Role.PACKAGE_CREATE,
           Role.PACKAGE_MANAGE,

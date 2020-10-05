@@ -13,6 +13,18 @@ import { ISearchPackages } from '../dsl/interface/demo.SearchPackages';
 import { ISearchPackagesFilter } from '../dsl/interface/demo.SearchPackagesFilter';
 import { IAddress } from '../dsl/interface/demo.Address';
 
+import { UserStatus } from '../dsl/enum/demo.UserStatus';
+import { Gender } from '../dsl/enum/demo.Gender';
+import { ICreateUser } from '../dsl/interface/demo.CreateUser';
+import { IEditUser } from '../dsl/interface/demo.EditUser';
+import { ILookupUser } from '../dsl/interface/demo.LookupUser';
+import { IMarkUserAsActive } from '../dsl/interface/demo.MarkUserAsActive';
+import { IMarkUserAsBlocked} from '../dsl/interface/demo.MarkUserAsBlocked';
+import { IMarkUserAsDeactivated} from '../dsl/interface/demo.MarkUserAsDeactivated';
+import { IUserVM } from '../dsl/interface/demo.UserVM';
+import { ISearchUsers } from '../dsl/interface/demo.SearchUsers';
+import { ISearchUsersFilter } from '../dsl/interface/demo.SearchUsersFilter';
+
 const packages: IPackageVM[] = [
   {
     ID: uuid() as UUID,
@@ -43,13 +55,166 @@ const packages: IPackageVM[] = [
   },
 ];
 
+const users: IUserVM[] = [
+  {
+    ID: uuid() as UUID,
+    firstName: 'Peregrin' as TextStr,
+    lastName: 'Took' as TextStr,
+    email: 'pippin@test.com' as TextStr,
+    address:  {
+      street: 'Street 1',
+      zipCode: '20024',
+      region: 'Shire',
+      city: 'Hobbit',
+      country: 'Shire',
+    },
+    gender: Gender.Male,
+    status: UserStatus.Active,
+  },
+  {
+    ID: uuid() as UUID,
+    firstName: 'Meriadoc' as TextStr,
+    lastName: 'Brandybuck' as TextStr,
+    address:  {
+      street: 'Test 213',
+      zipCode: '21000',
+      region: 'Shire',
+      city: 'Hobbiton',
+      country: 'Shire',
+    },
+    email: 'merry@test.com' as TextStr,
+    gender: Gender.Male,
+    status: UserStatus.Active,
+  },
+];
+
 const gt = (a?: string | number, b?: string | number) => a != null && b != null && new BigNumber(a).isGreaterThan(new BigNumber(b));
 const lt = (a?: string | number, b?: string | number) => a != null && b != null && new BigNumber(a).isLessThan(new BigNumber(b));
 const empty = (a?: any) => a == null || (typeof a === 'string' && a.trim().length === 0) || ((a as any[]).length === 0);
+const includes = (a: string, b: string) => a.toLowerCase().includes(b.toLowerCase());
 
 type SubmitErrors<T> = {
   [K in keyof T]?: string | SubmitErrors<T[K]>;
 }
+
+const getFilteredUsers = (filter: ISearchUsersFilter): IUserVM[] =>
+  users.filter((u: IUserVM) => {
+    if (!includes(u.firstName, filter.firstName || '')) {
+      return false;
+    }
+
+    if (!includes(u.lastName, filter.lastName || '')) {
+      return false;
+    }
+
+    if (!includes(u.email, filter.email || '')) {
+      return false;
+    }
+
+    if (filter.status != null && filter.status.length > 0 && !filter.status.includes(u.status)) {
+      return false;
+    }
+
+    return true;
+  });
+
+export const searchUsers = (command: ISearchUsers): ISearchUsers => ({
+  ...command,
+  users: getFilteredUsers(command.filter),
+});
+
+const validateUserSubmit = (command: ICreateUser | IEditUser): void => {
+  const errors: SubmitErrors<ICreateUser | IEditUser> = {};
+  appendErrors(errors, 'address', validateAddress(command.address || {}));
+
+  if (empty(command.firstName)) {
+    errors.firstName = 'Required';
+  }
+
+  if (empty(command.lastName)) {
+    errors.lastName = 'Required';
+  }
+
+  if (empty(command.email)) {
+    errors.email = 'Required';
+  }
+
+  if (empty(command.gender)) {
+    errors.gender = 'Required';
+  }
+
+  if (Object.keys(errors).length > 0) {
+    throw errors;
+  }
+}
+
+type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+
+export const createUser = (command: Writeable<ICreateUser>): ICreateUser => {
+  validateUserSubmit(command);
+  // reusing FE model, so read-only, we're hacking around that
+  command.ID = uuid() as UUID;
+  command.status = UserStatus.Active;
+  command.statusChangedOn = String(new Date()) as TimestampStr;
+  users.push(command as unknown as IUserVM);
+  return command;
+}
+
+export const editUser = (command: IEditUser): IEditUser => {
+  const original = users.find((u) => u.ID === command.ID);
+  if (original == null) {
+    throw new Error(`No user exists for ID ${command.ID}`);
+  }
+  validateUserSubmit(command);
+  original.firstName = command.firstName;
+  original.lastName = command.lastName;
+  original.email = command.email;
+  original.address = command.address;
+  original.gender = command.gender;
+  return command;
+};
+
+export const lookupUser = (command: ILookupUser): ILookupUser => {
+  const match = users.find((u) => u.ID === command.id);
+  if (match == null) {
+    throw new Error(`No user exists for ID ${command.id}`);
+  }
+
+  return {
+    ...command,
+    user: match,
+  };
+};
+
+export const markUserAsActive = (command: IMarkUserAsActive): IMarkUserAsActive => {
+  const original = users.find((u) => u.ID === command.userID);
+  if (original == null) {
+    throw new Error(`No user exists for ID ${command.userID}`);
+  }
+  original.status = UserStatus.Active;
+  original.statusChangedOn = String(new Date()) as TimestampStr;
+  return command;
+};
+
+export const markUserAsBlocked = (command: IMarkUserAsBlocked): IMarkUserAsBlocked => {
+  const original = users.find((u) => u.ID === command.userID);
+  if (original == null) {
+    throw new Error(`No user exists for ID ${command.userID}`);
+  }
+  original.status = UserStatus.Blocked;
+  original.statusChangedOn = String(new Date()) as TimestampStr;
+  return command;
+};
+
+export const markUserAsDeactivated = (command: IMarkUserAsDeactivated): IMarkUserAsDeactivated => {
+  const original = users.find((u) => u.ID === command.userID);
+  if (original == null) {
+    throw new Error(`No user exists for ID ${command.userID}`);
+  }
+  original.status = UserStatus.Deactivated;
+  original.statusChangedOn = String(new Date()) as TimestampStr;
+  return command;
+};
 
 const getFilteredPackages = (filter: ISearchPackagesFilter): IPackageVM[] =>
   packages.filter((p: IPackageVM) => {
@@ -68,7 +233,7 @@ const getFilteredPackages = (filter: ISearchPackagesFilter): IPackageVM[] =>
     return true;
   });
 
-export const search = (command: ISearchPackages): ISearchPackages => ({
+export const searchPackages = (command: ISearchPackages): ISearchPackages => ({
   ...command,
   packages: getFilteredPackages(command.filter),
 });
@@ -100,7 +265,7 @@ const validateAddress = (address: Partial<IAddress>): SubmitErrors<IAddress> => 
   return errors;
 }
 
-const validateSubmit = (command: ICreatePackage | IEditPackage): void => {
+const validatePackageSubmit = (command: ICreatePackage | IEditPackage): void => {
   const errors: SubmitErrors<ICreatePackage | IEditPackage> = {};
   appendErrors(errors, 'deliverToAddress', validateAddress(command.deliverToAddress || {}));
 
@@ -127,22 +292,22 @@ const validateSubmit = (command: ICreatePackage | IEditPackage): void => {
   }
 }
 
-export const create = (command: ICreatePackage): ICreatePackage => {
-  validateSubmit(command);
+export const createPackage = (command: Writeable<ICreatePackage>): ICreatePackage => {
+  validatePackageSubmit(command);
   // reusing FE model, so read-only, we're hacking around that
-  (command as any).ID = uuid() as UUID;
-  (command as any).status = PackageStatus.Pending;
-  (command as any).statusChangedOn = String(new Date()) as TimestampStr;
+  command.ID = uuid() as UUID;
+  command.status = PackageStatus.Pending;
+  command.statusChangedOn = String(new Date()) as TimestampStr;
   packages.push(command as unknown as IPackageVM);
   return command;
 }
 
-export const edit = (command: IEditPackage): IEditPackage => {
+export const editPackage = (command: IEditPackage): IEditPackage => {
   const original = packages.find((p) => p.ID === command.ID);
   if (original == null) {
     throw new Error(`No package exists for ID ${command.ID}`);
   }
-  validateSubmit(command);
+  validatePackageSubmit(command);
   original.deliverToAddress = command.deliverToAddress;
   original.description = command.description;
   original.price = command.price;
@@ -151,7 +316,7 @@ export const edit = (command: IEditPackage): IEditPackage => {
   return command;
 };
 
-export const lookup = (command: ILookupPackage): ILookupPackage => {
+export const lookupPackage = (command: ILookupPackage): ILookupPackage => {
   const match = packages.find((p) => p.ID === command.id);
   if (match == null) {
     throw new Error(`No package exists for ID ${command.id}`);
@@ -161,9 +326,9 @@ export const lookup = (command: ILookupPackage): ILookupPackage => {
     ...command,
     package: match,
   };
-}
+};
 
-export const markInDelivery = (command: IMarkPackageInDelivery): IMarkPackageInDelivery => {
+export const markPackageInDelivery = (command: IMarkPackageInDelivery): IMarkPackageInDelivery => {
   const original = packages.find((p) => p.ID === command.packageID);
   if (original == null) {
     throw new Error(`No package exists for ID ${command.packageID}`);
@@ -176,7 +341,7 @@ export const markInDelivery = (command: IMarkPackageInDelivery): IMarkPackageInD
   return command;
 };
 
-export const markDelivered = (command: IMarkPackageDelivered): IMarkPackageDelivered => {
+export const markPackageDelivered = (command: IMarkPackageDelivered): IMarkPackageDelivered => {
   const original = packages.find((p) => p.ID === command.packageID);
   if (original == null) {
     throw new Error(`No package exists for ID ${command.packageID}`);
@@ -189,7 +354,7 @@ export const markDelivered = (command: IMarkPackageDelivered): IMarkPackageDeliv
   return command;
 };
 
-export const markReturned = (command: IMarkPackageReturned): IMarkPackageReturned => {
+export const markPackageReturned = (command: IMarkPackageReturned): IMarkPackageReturned => {
   const original = packages.find((p) => p.ID === command.packageID);
   if (original == null) {
     throw new Error(`No package exists for ID ${command.packageID}`);

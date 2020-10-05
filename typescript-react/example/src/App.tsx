@@ -14,6 +14,9 @@ import { ForFakeUser } from './components/Auth';
 import { FieldControls } from './components/Fields';
 import { Loading } from './components/Loading';
 import { Layout } from './components/Layout';
+import { CreateUser } from './pages/User/Create';
+import { ListUsers } from './pages/User/List';
+import { EditUser, ViewUser } from './pages/User/ViewEdit';
 import { IPackageMixin } from './dsl/interface/demo.PackageMixin';
 import { CreatePackage } from './pages/Package/Create';
 import { ListPackages } from './pages/Package/List';
@@ -59,11 +62,15 @@ const App = () => {
           <Layout>
             <ForFakeUser>
               <Switch>
+                <Route path='/user/create' component={CreateUser} />
+                <Route path='/user/list' component={ListUsers} />
+                <Route path='/user/:id/edit' component={EditUser} />
+                <Route path='/user/:id/dashboard' component={ViewUser} />
                 <Route path='/package/create' component={CreatePackage} />
                 <Route path='/package/list' component={ListPackages} />
                 <Route path='/package/:id/edit' component={EditPackage} />
                 <Route path='/package/:id/dashboard' component={ViewPackage} />
-                <Redirect to='/package/list' />
+                <Redirect to='/user/list' />
               </Switch>
             </ForFakeUser>
           </Layout>

@@ -3,25 +3,25 @@ import { FormType } from 'revenj';
 import { RouteComponentProps } from 'react-router';
 
 import { AuthContext } from '../../components/Auth';
-import { CreatePackagePresenter } from '../../dsl/presenters/demo.CreatePackage';
-import { ICreatePackage as ICommand } from '../../dsl/interface/demo.CreatePackage';
+import { CreateUserPresenter } from '../../dsl/presenters/demo.CreateUser';
+import { ICreateUser as ICommand } from '../../dsl/interface/demo.CreateUser';
 
-interface ICreatePackage extends RouteComponentProps<{}> {}
+interface ICreateUser extends RouteComponentProps<{}> {}
 
-export const CreatePackage: React.FC<ICreatePackage> = ({ history }) => {
+export const CreateUser: React.FC<ICreateUser> = ({ history }) => {
   const { user, onForbidden } = React.useContext(AuthContext)!;
   const constTrue = React.useCallback(() => true, []);
   const navigateTo = React.useCallback((formType: FormType, id?: UUID) => {
     switch (formType) {
-      case FormType.Create: return history.push(`/package/create`);
-      case FormType.Edit: return history.push(`/package/${encodeURIComponent(id!)}/edit`);
-      case FormType.View: return history.push(`/package/${encodeURIComponent(id!)}/dashboard`);
+      case FormType.Create: return history.push(`/user/create`);
+      case FormType.Edit: return history.push(`/user/${encodeURIComponent(id!)}/edit`);
+      case FormType.View: return history.push(`/user/${encodeURIComponent(id!)}/dashboard`);
     }
   }, [history]);
   const onSubmitSuccess = React.useCallback((command: ICommand) => navigateTo(FormType.View, command.ID!), []);
 
   return (
-    <CreatePackagePresenter
+    <CreateUserPresenter
       userRoles={user?.roles ?? new Set()}
       onForbidden={onForbidden}
       canNavigateTo={constTrue}
