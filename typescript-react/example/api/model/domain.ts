@@ -148,12 +148,14 @@ const validateUserSubmit = (command: ICreateUser | IEditUser): void => {
   }
 }
 
-export const createUser = (command: ICreateUser): ICreateUser => {
+type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+
+export const createUser = (command: Writeable<ICreateUser>): ICreateUser => {
   validateUserSubmit(command);
   // reusing FE model, so read-only, we're hacking around that
-  (command as any).ID = uuid() as UUID;
-  (command as any).status = PackageStatus.Pending;
-  (command as any).statusChangedOn = String(new Date()) as TimestampStr;
+  command.ID = uuid() as UUID;
+  command.status = UserStatus.Active;
+  command.statusChangedOn = String(new Date()) as TimestampStr;
   users.push(command as unknown as IUserVM);
   return command;
 }
@@ -194,7 +196,7 @@ export const markUserAsActive = (command: IMarkUserAsActive): IMarkUserAsActive 
   return command;
 };
 
-export const markUserAsBlocked= (command: IMarkUserAsBlocked): IMarkUserAsBlocked => {
+export const markUserAsBlocked = (command: IMarkUserAsBlocked): IMarkUserAsBlocked => {
   const original = users.find((u) => u.ID === command.userID);
   if (original == null) {
     throw new Error(`No user exists for ID ${command.userID}`);
@@ -290,12 +292,12 @@ const validatePackageSubmit = (command: ICreatePackage | IEditPackage): void => 
   }
 }
 
-export const createPackage = (command: ICreatePackage): ICreatePackage => {
+export const createPackage = (command: Writeable<ICreatePackage>): ICreatePackage => {
   validatePackageSubmit(command);
   // reusing FE model, so read-only, we're hacking around that
-  (command as any).ID = uuid() as UUID;
-  (command as any).status = PackageStatus.Pending;
-  (command as any).statusChangedOn = String(new Date()) as TimestampStr;
+  command.ID = uuid() as UUID;
+  command.status = PackageStatus.Pending;
+  command.statusChangedOn = String(new Date()) as TimestampStr;
   packages.push(command as unknown as IPackageVM);
   return command;
 }

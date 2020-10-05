@@ -18,6 +18,8 @@ export const CreateUser: React.FC<ICreateUser> = ({ history }) => {
       case FormType.View: return history.push(`/user/${encodeURIComponent(id!)}/dashboard`);
     }
   }, [history]);
+  const onSubmitSuccess = React.useCallback((command: ICommand) => navigateTo(FormType.View, command.ID!), []);
+
   return (
     <CreateUserPresenter
       userRoles={user?.roles ?? new Set()}
@@ -25,7 +27,7 @@ export const CreateUser: React.FC<ICreateUser> = ({ history }) => {
       canNavigateTo={constTrue}
       navigateTo={navigateTo}
       onCancel={history.goBack}
-      onSubmitSuccess={(command: ICommand) => navigateTo(FormType.View, command.ID!)}
+      onSubmitSuccess={onSubmitSuccess}
     />
   )
 };

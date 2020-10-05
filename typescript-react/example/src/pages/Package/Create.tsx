@@ -18,6 +18,8 @@ export const CreatePackage: React.FC<ICreatePackage> = ({ history }) => {
       case FormType.View: return history.push(`/package/${encodeURIComponent(id!)}/dashboard`);
     }
   }, [history]);
+  const onSubmitSuccess = React.useCallback((command: ICommand) => navigateTo(FormType.View, command.ID!), []);
+
   return (
     <CreatePackagePresenter
       userRoles={user?.roles ?? new Set()}
@@ -25,7 +27,7 @@ export const CreatePackage: React.FC<ICreatePackage> = ({ history }) => {
       canNavigateTo={constTrue}
       navigateTo={navigateTo}
       onCancel={history.goBack}
-      onSubmitSuccess={(command: ICommand) => navigateTo(FormType.View, command.ID!)}
+      onSubmitSuccess={onSubmitSuccess}
     />
   )
 };

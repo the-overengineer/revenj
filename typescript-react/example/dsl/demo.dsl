@@ -66,7 +66,7 @@ module demo {
     has mixin UserMixin;
     UUID          ID { server managed; }
     Timestamp?    statusChangedOn { server managed; }
-    PackageStatus status { server managed; }
+    UserStatus status { server managed; }
   }
 
   command EditUser {
